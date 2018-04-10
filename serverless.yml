@@ -1,0 +1,63 @@
+service:
+  name: KainosKickoff2018
+
+provider:
+  name: aws
+  region: eu-west-1
+  runtime: nodejs8.10
+  environment:
+    ALEXA_SKILL_ID: ${env:ALEXA_SKILL_ID}
+    TWITTER_CONSUMER_KEY: ${env:TWITTER_CONSUMER_KEY}
+    TWITTER_CONSUMER_SECRET: ${env:TWITTER_CONSUMER_SECRET}
+    TWITTER_ACCESS_TOKEN: ${env:TWITTER_ACCESS_TOKEN}
+    TWITTER_ACCESS_TOKEN_SECRET: ${env:TWITTER_ACCESS_TOKEN_SECRET}
+
+plugins:
+  - serverless-alexa-skills
+
+functions:
+  kainosKickoffSkill:
+    name: KainosKickoffSkill-${self:provider.stage}
+    handler: src/index.handler
+    memorySize: 512
+    tags:
+      owner: marcind
+    events:
+      - alexaSkill
+
+custom:
+  alexa:
+    localServerPort: 3456
+    vendorId: ${env:AMAZON_VENDOR_ID}
+    clientId: ${env:AMAZON_CLIENT_ID}
+    clientSecret: ${env:AMAZON_CLIENT_SECRET}
+    skills:
+      - id: ${env:ALEXA_SKILL_ID}
+        manifest:
+          publishingInformation:
+            locales:
+              en-US:
+                name: KainosKickoffSkill
+          apis:
+            custom:
+              endpoint:
+                uri: arn:aws:lambda:${self:provider.region}:425110442143:function:${self:functions.kainosKickoffSkill.name}
+          manifestVersion: '1.0'
+        models:
+          en-US:
+            interactionModel:
+              languageModel:
+                invocationName: serverless tweets
+                intents:
+                  - name: AMAZON.CancelIntent
+                    samples: []
+                  - name: AMAZON.HelpIntent
+                    samples: []
+                  - name: AMAZON.StopIntent
+                    samples: []
+                  - name: TweetsCountIntent
+                    samples:
+                      - 'Check tweets'
+                      - 'Check tweets please'
+                      - 'Tweets count'
+                      - 'Tweets count please'
