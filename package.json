@@ -1,9 +1,20 @@
 {
   "name": "KainosKickoff2018",
-  "description": "",
   "version": "0.1.0",
-  "dependencies": {},
+  "description": "Demo app prepared for Serverless presentation",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Marcin Duszynski",
+  "license": "MIT",
+  "dependencies": {
+    "alexa-ability": "^0.12.0",
+    "alexa-ability-lambda-handler": "^0.3.3",
+    "alexa-ability-timeout": "^0.2.4",
+    "twit": "^2.2.9"
+  },
   "devDependencies": {
-    "serverless-alexa-skills": "0.0.6"
+    "serverless-alexa-skills": "0.0.6",
+    "serverless-iam-roles-per-function": "^0.1.5"
   }
 }

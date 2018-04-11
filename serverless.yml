@@ -14,16 +14,34 @@ provider:
 
 plugins:
   - serverless-alexa-skills
+  - serverless-iam-roles-per-function
 
 functions:
   kainosKickoffSkill:
     name: KainosKickoffSkill-${self:provider.stage}
-    handler: src/index.handler
+    handler: skill.handler
     memorySize: 512
     tags:
       owner: marcind
     events:
       - alexaSkill
+  twitterScanner:
+    name: twitterScanner-${self:provider.stage}
+    handler: scanner.handler
+    memorySize: 512
+    reservedConcurrency: 1
+    environment:
+      STATE_DB_NAME: ${self:resources.Resources.DynamoDbTable.Properties.TableName}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+        Resource: arn:aws:dynamodb:*:*:table/${self:resources.Resources.DynamoDbTable.Properties.TableName}
+    tags:
+      owner: marcind
+    events:
+      # - schedule: rate(1 minute)
 
 custom:
   alexa:
@@ -61,3 +79,19 @@ custom:
                       - 'Check tweets please'
                       - 'Tweets count'
                       - 'Tweets count please'
+
+resources:  
+  Resources:
+    DynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: KainosKickoff2018State-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: function_name
+            AttributeType: S
+        KeySchema:
+          - AttributeName: function_name
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
