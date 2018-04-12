@@ -2,6 +2,7 @@ const Twit  = require('twit')
 const AWS   = require('aws-sdk');
 
 const dynamo = new AWS.DynamoDB.DocumentClient();
+const sqs = new AWS.SQS({apiVersion: '2012-11-05'});
 
 const twitter = new Twit({
   consumer_key:         process.env.TWITTER_CONSUMER_KEY,
@@ -56,31 +57,64 @@ function saveState(state, context) {
   })
 }
 
-function getTweets(last_tweet_id) {
-  console.log('Last tweet id', last_tweet_id);
+function SendToQueue(statuses) {
+  let entries = [];
+
+  for (let i = 0; i < statuses.length; i++) {
+    let msg = statuses[i];
+
+    entries.push({
+      Id: msg.id_str,
+      MessageBody: JSON.stringify({
+        id: msg.id_str,
+        author: msg.user.name,
+        msg: msg.text.replace(/#\S+/ig,'')
+      }),
+      MessageAttributes: {
+        'Author': {
+          DataType: 'String',
+          StringValue: msg.user.name
+        },
+        'Message': {
+          DataType: 'String',
+          StringValue: msg.text.replace(/#\S+/ig,'')
+        }
+      }
+    })
+  }
+
+  var params = {
+    Entries: entries,
+    QueueUrl: process.env.TWEETS_SQS_URL
+  };
+
+  console.log('SQS params', params);
 
   return new Promise((resolve, reject) => {
-    twitter.get('search/tweets', { since_id: last_tweet_id, q: '#KainosKickoff AND #AskAlexa', lang: 'en', result_type: 'recent', count: 1000 }, function(err, data, response) {
+    sqs.sendMessageBatch(params, (err, data) => {
       if (err) {
         console.log('Error', err);
         reject(err);
       } else {
+        console.log('Success', data);
+        resolve(data);
+      }
+    });
+  })
+}
+
+function getTweets(last_tweet_id) {
+  console.log('Last tweet id', last_tweet_id);
+
+  return new Promise((resolve, reject) => {
+    twitter.get('search/tweets', { since_id: last_tweet_id, q: '#KainosKickoff AND #AskAlexa', lang: 'en', result_type: 'recent', count: 1000 }, async (err, data, response) => {
+      if (err) {
+        console.log('Error', err);
+
+        reject(err);
+      } else {
         console.log(data);
-        // console.log(data.statuses[0].text.replace(/#\S+/ig,''))
-
-        for (var i = 0; i < data.statuses.length; i++) {
-          const twitt = {
-            id: data.statuses[i].id_str,
-            author: data.statuses[i].user.name,
-            msg: data.statuses[i].text.replace(/#\S+/ig,'')
-          }
-          
-          console.log(twitt);
-        }
-
-        console.log(data.search_metadata.max_id_str);
-        console.log(data.search_metadata.refresh_url);
-        console.log(data.search_metadata.next_results);
+        await SendToQueue(data.statuses);
 
         resolve(data.search_metadata.max_id_str);
       }

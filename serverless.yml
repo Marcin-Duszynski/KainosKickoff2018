@@ -6,6 +6,7 @@ provider:
   region: eu-west-1
   runtime: nodejs8.10
   environment:
+    TWEETS_SQS_URL: https://sqs.${self:provider.region}.amazonaws.com/${self:custom.aws_account_id}/${self:resources.Resources.TweetMessages.Properties.QueueName}
     ALEXA_SKILL_ID: ${env:ALEXA_SKILL_ID}
     TWITTER_CONSUMER_KEY: ${env:TWITTER_CONSUMER_KEY}
     TWITTER_CONSUMER_SECRET: ${env:TWITTER_CONSUMER_SECRET}
@@ -17,33 +18,45 @@ plugins:
   - serverless-iam-roles-per-function
 
 functions:
+
   kainosKickoffSkill:
     name: KainosKickoffSkill-${self:provider.stage}
     handler: skill.handler
     memorySize: 512
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - sqs:ReceiveMessage
+        Resource: arn:aws:sqs:*:*:${self:resources.Resources.TweetMessages.Properties.QueueName}
     tags:
       owner: marcind
     events:
       - alexaSkill
+
   twitterScanner:
     name: twitterScanner-${self:provider.stage}
     handler: scanner.handler
     memorySize: 512
     reservedConcurrency: 1
     environment:
-      STATE_DB_NAME: ${self:resources.Resources.DynamoDbTable.Properties.TableName}
+      STATE_DB_NAME: ${self:resources.Resources.StateDb.Properties.TableName}
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:GetItem
           - dynamodb:PutItem
-        Resource: arn:aws:dynamodb:*:*:table/${self:resources.Resources.DynamoDbTable.Properties.TableName}
+        Resource: arn:aws:dynamodb:*:*:table/${self:resources.Resources.StateDb.Properties.TableName}
+      - Effect: Allow
+        Action:
+          - sqs:SendMessage
+        Resource: arn:aws:sqs:*:*:${self:resources.Resources.TweetMessages.Properties.QueueName}
     tags:
       owner: marcind
     events:
       # - schedule: rate(1 minute)
 
 custom:
+  aws_account_id: 425110442143
   alexa:
     localServerPort: 3456
     vendorId: ${env:AMAZON_VENDOR_ID}
@@ -59,7 +72,7 @@ custom:
           apis:
             custom:
               endpoint:
-                uri: arn:aws:lambda:${self:provider.region}:425110442143:function:${self:functions.kainosKickoffSkill.name}
+                uri: arn:aws:lambda:${self:provider.region}:${self:custom.aws_account_id}:function:${self:functions.kainosKickoffSkill.name}
           manifestVersion: '1.0'
         models:
           en-US:
@@ -82,7 +95,8 @@ custom:
 
 resources:  
   Resources:
-    DynamoDbTable:
+
+    StateDb:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: KainosKickoff2018State-${self:provider.stage}
@@ -95,3 +109,22 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
+
+    TweetMessages:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: KainosKickoff2018Tweets-${self:provider.stage}
+        MessageRetentionPeriod: 1209600
+        VisibilityTimeout: 60
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+            - TweetMessagesDeadLetterQueue
+            - Arn
+          maxReceiveCount: 10
+
+    TweetMessagesDeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: KainosKickoff2018Tweets-death-${self:provider.stage}
+        MessageRetentionPeriod: 1209600
