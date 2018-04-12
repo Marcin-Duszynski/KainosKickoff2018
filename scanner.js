@@ -67,6 +67,17 @@ function getTweets(last_tweet_id) {
       } else {
         console.log(data);
         // console.log(data.statuses[0].text.replace(/#\S+/ig,''))
+
+        for (var i = 0; i < data.statuses.length; i++) {
+          const twitt = {
+            id: data.statuses[i].id_str,
+            author: data.statuses[i].user.name,
+            msg: data.statuses[i].text.replace(/#\S+/ig,'')
+          }
+          
+          console.log(twitt);
+        }
+
         console.log(data.search_metadata.max_id_str);
         console.log(data.search_metadata.refresh_url);
         console.log(data.search_metadata.next_results);
