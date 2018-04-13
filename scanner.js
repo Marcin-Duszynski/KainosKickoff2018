@@ -1,8 +1,8 @@
-const Twit  = require('twit')
-const AWS   = require('aws-sdk');
+const { SQS, DynamoDB }   = require('aws-sdk');
+const Twit                = require('twit')
 
-const dynamo = new AWS.DynamoDB.DocumentClient();
-const sqs = new AWS.SQS({apiVersion: '2012-11-05'});
+const dynamo = new DynamoDB.DocumentClient();
+const sqs = new SQS({apiVersion: '2012-11-05'});
 
 const twitter = new Twit({
   consumer_key:         process.env.TWITTER_CONSUMER_KEY,

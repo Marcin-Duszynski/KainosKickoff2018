@@ -7,11 +7,6 @@ provider:
   runtime: nodejs8.10
   environment:
     TWEETS_SQS_URL: https://sqs.${self:provider.region}.amazonaws.com/${self:custom.aws_account_id}/${self:resources.Resources.TweetMessages.Properties.QueueName}
-    ALEXA_SKILL_ID: ${env:ALEXA_SKILL_ID}
-    TWITTER_CONSUMER_KEY: ${env:TWITTER_CONSUMER_KEY}
-    TWITTER_CONSUMER_SECRET: ${env:TWITTER_CONSUMER_SECRET}
-    TWITTER_ACCESS_TOKEN: ${env:TWITTER_ACCESS_TOKEN}
-    TWITTER_ACCESS_TOKEN_SECRET: ${env:TWITTER_ACCESS_TOKEN_SECRET}
 
 plugins:
   - serverless-alexa-skills
@@ -23,10 +18,13 @@ functions:
     name: KainosKickoffSkill-${self:provider.stage}
     handler: skill.handler
     memorySize: 512
+    environment:
+      ALEXA_SKILL_ID: ${env:ALEXA_SKILL_ID}
     iamRoleStatements:
       - Effect: Allow
         Action:
           - sqs:ReceiveMessage
+          - sqs:DeleteMessage
         Resource: arn:aws:sqs:*:*:${self:resources.Resources.TweetMessages.Properties.QueueName}
     tags:
       owner: marcind
@@ -40,6 +38,10 @@ functions:
     reservedConcurrency: 1
     environment:
       STATE_DB_NAME: ${self:resources.Resources.StateDb.Properties.TableName}
+      TWITTER_CONSUMER_KEY: ${env:TWITTER_CONSUMER_KEY}
+      TWITTER_CONSUMER_SECRET: ${env:TWITTER_CONSUMER_SECRET}
+      TWITTER_ACCESS_TOKEN: ${env:TWITTER_ACCESS_TOKEN}
+      TWITTER_ACCESS_TOKEN_SECRET: ${env:TWITTER_ACCESS_TOKEN_SECRET}
     iamRoleStatements:
       - Effect: Allow
         Action:

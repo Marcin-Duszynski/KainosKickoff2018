@@ -1,27 +1,21 @@
 const { Ability, events }       = require('alexa-ability');
 const { handleAbility }         = require('alexa-ability-lambda-handler');
 const { timeout, TimeoutError } = require('alexa-ability-timeout');
-const Twit                      = require('twit')
+const { SQS }   = require('aws-sdk');
 
-const twitter = new Twit({
-  consumer_key:         process.env.TWITTER_CONSUMER_KEY,
-  consumer_secret:      process.env.TWITTER_CONSUMER_SECRET,
-  access_token:         process.env.TWITTER_ACCESS_TOKEN,
-  access_token_secret:  process.env.TWITTER_ACCESS_TOKEN_SECRET
-})
-
+const sqs = new SQS({apiVersion: '2012-11-05'});
 const app = new Ability({
   applicationId: process.env.ALEXA_SKILL_ID
 });
 
 app.use(timeout(4000));
 
-app.use(function(req, next) {
+app.use((req, next) => {
   console.log('Handling:', req);
   next();
 });
 
-app.on(events.launch, function(req, next) {
+app.on(events.launch, (req, next) => {
   const speech = (`
       <speak>
           Hello <break time="100ms" /> world
@@ -31,12 +25,12 @@ app.on(events.launch, function(req, next) {
   req.say('ssml', speech).send();
 });
 
-app.on(events.end, function(req, next) {
+app.on(events.end, (req, next) => {
   console.log(`Session ended because: ${req.reason}`);
   req.say('Goodbye!').end();
 });
 
-app.on(events.help, function(req, next) {
+app.on(events.help, (req, next) => {
   const speech = (`
       <speak>
           Please say <break time="50ms" /> Check tweets
@@ -46,33 +40,62 @@ app.on(events.help, function(req, next) {
   req.say('ssml', speech).send();
 });
 
-app.on(events.cancel, function(req, next) {
+app.on(events.cancel, (req, next) => {
   if (req.timedOut) return;
   req.say('Cancelling!').end();
 });
 
-app.on(events.stop, function(req, next) {
+app.on(events.stop, (req, next) => {
   if (req.timedOut) return;
   req.say('Stopping!').end();
 });
 
-app.on('TweetsCountIntent', function(req, next) {
-  twitter.get('search/tweets', { q: '#KainosKickoff AND #AskAlexa', lang: 'en', result_type: 'recent', count: 1 }, function(err, data, response) {
-    console.log(data)
-    console.log(data.statuses[0].text.replace(/#\S+/ig,''))
-    console.log(data.statuses[0].id_str)
-    console.log(data.search_metadata.refresh_url)
-    console.log(data.search_metadata.next_results)
+app.on('TweetsCountIntent', (req, next) => {
+  var params = {
+    AttributeNames: [
+       'SentTimestamp'
+    ],
+    MaxNumberOfMessages: 1,
+    MessageAttributeNames: [
+       'All'
+    ],
+    QueueUrl: process.env.TWEETS_SQS_URL
+  };
 
-    req.say(data.statuses[0].text.replace(/#\S+/ig,'')).send();
-  })
+  sqs.receiveMessage(params, (err, data) => {
+    if (err) {
+      console.log("Receive Error", err);
+    } else if (data.Messages) {
+      console.log('SQS MSG:', data.Messages[0].MessageAttributes);
+
+      var deleteParams = {
+        QueueUrl: process.env.TWEETS_SQS_URL,
+        ReceiptHandle: data.Messages[0].ReceiptHandle
+      };
+
+      sqs.deleteMessage(deleteParams, (err, data) => {
+        if (err) {
+          console.log("Delete Error", err);
+        } else {
+          console.log("Message Deleted", data);
+        }
+      });
+
+      const speech = (`
+        <speak>
+            ${data.Messages[0].MessageAttributes.Author.StringValue} said <break time="50ms" /> ${data.Messages[0].MessageAttributes.Message.StringValue}
+        </speak>
+      `);
+      req.say('ssml', speech).send();
+    }
+  });
 });
 
-app.use(function(req, next) {
-  req.say('I don\'t know what to say. Ask about tweets.').end();
+app.use((req, next) => {
+  req.say('I don\'t know what to say. Say read tweet.').end();
 });
 
-app.use(function(err, req, next) {
+app.use((err, req, next) => {
   if (err instanceof TimeoutError) {
     req.say('Sorry, that took to long. Please try again.').send();
   } else {
