@@ -19,7 +19,7 @@ app.on(events.launch, (req, next) => {
   const speech = (`
       <speak>
           Hello Kainos <break time="100ms" />
-          I am Alexa and I can read tweets tagged using #KainosKickoff and #AskAlexa <break time="100ms" />
+          I am Alexa and I can read tweets tagged using <break time="50ms" /> #KainosKickoff <break time="50ms" /> and <break time="50ms" /> #AskAlexa <break time="100ms" />
           Try me. Just send tweet with tags from the screen <break time="100ms" />
           Good luck
       </speak>
