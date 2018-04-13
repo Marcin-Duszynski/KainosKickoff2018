@@ -2,7 +2,7 @@ const { SQS, DynamoDB }   = require('aws-sdk');
 const Twit                = require('twit')
 
 const dynamo = new DynamoDB.DocumentClient();
-const sqs = new SQS({apiVersion: '2012-11-05'});
+const sqs = new SQS({ apiVersion: '2012-11-05' });
 
 const twitter = new Twit({
   consumer_key:         process.env.TWITTER_CONSUMER_KEY,
@@ -83,7 +83,7 @@ function SendToQueue(statuses) {
     })
   }
 
-  var params = {
+  const params = {
     Entries: entries,
     QueueUrl: process.env.TWEETS_SQS_URL
   };

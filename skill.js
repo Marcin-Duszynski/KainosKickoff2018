@@ -1,9 +1,9 @@
 const { Ability, events }       = require('alexa-ability');
 const { handleAbility }         = require('alexa-ability-lambda-handler');
 const { timeout, TimeoutError } = require('alexa-ability-timeout');
-const { SQS }   = require('aws-sdk');
+const { SQS }                   = require('aws-sdk');
 
-const sqs = new SQS({apiVersion: '2012-11-05'});
+const sqs = new SQS({ apiVersion: '2012-11-05' });
 const app = new Ability({
   applicationId: process.env.ALEXA_SKILL_ID
 });
@@ -18,7 +18,10 @@ app.use((req, next) => {
 app.on(events.launch, (req, next) => {
   const speech = (`
       <speak>
-          Hello <break time="100ms" /> world
+          Hello Kainos <break time="100ms" />
+          I am Alexa and I can read tweets tagged using #KainosKickoff and #AskAlexa <break time="100ms" />
+          Try me. Just send tweet with tags from the screen <break time="100ms" />
+          Good luck
       </speak>
   `);
 
@@ -33,7 +36,7 @@ app.on(events.end, (req, next) => {
 app.on(events.help, (req, next) => {
   const speech = (`
       <speak>
-          Please say <break time="50ms" /> Check tweets
+          Please say <break time="50ms" /> Read tweets
       </speak>
   `);
 
@@ -50,8 +53,8 @@ app.on(events.stop, (req, next) => {
   req.say('Stopping!').end();
 });
 
-app.on('TweetsCountIntent', (req, next) => {
-  var params = {
+app.on('TweetsReaderIntent', (req, next) => {
+  const params = {
     AttributeNames: [
        'SentTimestamp'
     ],
@@ -68,7 +71,7 @@ app.on('TweetsCountIntent', (req, next) => {
     } else if (data.Messages) {
       console.log('SQS MSG:', data.Messages[0].MessageAttributes);
 
-      var deleteParams = {
+      const deleteParams = {
         QueueUrl: process.env.TWEETS_SQS_URL,
         ReceiptHandle: data.Messages[0].ReceiptHandle
       };

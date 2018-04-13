@@ -88,12 +88,10 @@ custom:
                     samples: []
                   - name: AMAZON.StopIntent
                     samples: []
-                  - name: TweetsCountIntent
+                  - name: TweetsReaderIntent
                     samples:
-                      - 'Check tweets'
-                      - 'Check tweets please'
-                      - 'Tweets count'
-                      - 'Tweets count please'
+                      - 'Read tweets'
+                      - 'Read tweets please'
 
 resources:  
   Resources:
