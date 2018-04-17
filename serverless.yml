@@ -1,5 +1,5 @@
 service:
-  name: KainosKickoff2018
+  name: KainosKickoff18
 
 provider:
   name: aws

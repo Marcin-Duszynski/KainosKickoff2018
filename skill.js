@@ -19,7 +19,7 @@ app.on(events.launch, (req, next) => {
   const speech = (`
       <speak>
           Hello Kainos <break time="100ms" />
-          I am Alexa and I can read tweets tagged using <break time="50ms" /> #KainosKickoff <break time="50ms" /> and <break time="50ms" /> #AskAlexa <break time="100ms" />
+          I am Alexa and I can read tweets tagged using <break time="50ms" /> #KainosKickoff18 <break time="50ms" /> and <break time="50ms" /> #AskAlexa <break time="100ms" />
           Try me. Just send tweet with tags from the screen <break time="100ms" />
           Good luck
       </speak>
@@ -54,6 +54,8 @@ app.on(events.stop, (req, next) => {
 });
 
 app.on('TweetsReaderIntent', (req, next) => {
+  console.log('Intent req', req);
+
   const params = {
     AttributeNames: [
        'SentTimestamp'
@@ -94,16 +96,14 @@ app.on('TweetsReaderIntent', (req, next) => {
   });
 });
 
-app.use((req, next) => {
-  req.say('I don\'t know what to say. Say read tweet.').end();
-});
-
 app.use((err, req, next) => {
   if (err instanceof TimeoutError) {
     req.say('Sorry, that took to long. Please try again.').send();
-  } else {
-    req.say('Sorry, something went wrong. Please try again later.').end();
-  }
+  };
+});
+
+app.use((req, next) => {
+  req.say('I don\'t know what to say. Please try again or ask for help.').end();
 });
 
 exports.handler = handleAbility(app);

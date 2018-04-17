@@ -107,7 +107,7 @@ function getTweets(last_tweet_id) {
   console.log('Last tweet id', last_tweet_id);
 
   return new Promise((resolve, reject) => {
-    twitter.get('search/tweets', { since_id: last_tweet_id, q: '#KainosKickoff AND #AskAlexa', lang: 'en', result_type: 'recent', count: 1000 }, async (err, data, response) => {
+    twitter.get('search/tweets', { since_id: last_tweet_id, q: '#KainosKickoff18 AND #AskAlexa', lang: 'en', result_type: 'recent', count: 1000 }, async (err, data, response) => {
       if (err) {
         console.log('Error', err);
 
