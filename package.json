@@ -1,7 +1,7 @@
 {
   "name": "KainosKickoff18",
   "version": "0.1.0",
-  "description": "Demo app prepared for Serverless presentation",
+  "description": "Demo app prepared for The Serverless presentation",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "serverless-alexa-skills": "0.0.6",
-    "serverless-iam-roles-per-function": "^0.1.5"
+    "serverless-iam-roles-per-function": "^0.1.5",
+    "serverless-plugin-iopipe": "^1.4.0"
   }
 }

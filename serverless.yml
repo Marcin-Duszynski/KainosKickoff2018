@@ -55,10 +55,11 @@ functions:
     tags:
       owner: marcind
     events:
-      # - schedule: rate(1 minute)
+      - schedule: rate(1 minute)
 
 custom:
   aws_account_id: 425110442143
+
   alexa:
     localServerPort: 3456
     vendorId: ${env:AMAZON_VENDOR_ID}
@@ -80,18 +81,20 @@ custom:
           en-US:
             interactionModel:
               languageModel:
-                invocationName: serverless tweets
+                invocationName: kainos kickoff
                 intents:
+                  - name: TweetsReaderIntent
+                    samples:
+                      - read question
+                      - to read question
+                      - get question
+                      - to get question
                   - name: AMAZON.CancelIntent
                     samples: []
                   - name: AMAZON.HelpIntent
                     samples: []
                   - name: AMAZON.StopIntent
                     samples: []
-                  - name: TweetsReaderIntent
-                    samples:
-                      - 'Read tweets'
-                      - 'Read tweets please'
 
 resources:  
   Resources:

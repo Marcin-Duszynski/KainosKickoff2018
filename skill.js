@@ -16,6 +16,8 @@ app.use((req, next) => {
 });
 
 app.on(events.launch, (req, next) => {
+  console.log('Launch', req);
+  
   const speech = (`
       <speak>
           Hello Kainos <break time="100ms" />

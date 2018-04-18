@@ -83,24 +83,26 @@ function SendToQueue(statuses) {
     })
   }
 
-  const params = {
-    Entries: entries,
-    QueueUrl: process.env.TWEETS_SQS_URL
-  };
+  if (entries.length > 0) {
+    const params = {
+      Entries: entries,
+      QueueUrl: process.env.TWEETS_SQS_URL
+    };
 
-  console.log('SQS params', params);
+    console.log('SQS params', params);
 
-  return new Promise((resolve, reject) => {
-    sqs.sendMessageBatch(params, (err, data) => {
-      if (err) {
-        console.log('Error', err);
-        reject(err);
-      } else {
-        console.log('Success', data);
-        resolve(data);
-      }
-    });
-  })
+    return new Promise((resolve, reject) => {
+      sqs.sendMessageBatch(params, (err, data) => {
+        if (err) {
+          console.log('Error', err);
+          reject(err);
+        } else {
+          console.log('Success', data);
+          resolve(data);
+        }
+      });
+    })
+  }
 }
 
 function getTweets(last_tweet_id) {
