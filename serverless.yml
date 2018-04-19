@@ -83,12 +83,15 @@ custom:
               languageModel:
                 invocationName: kainos kickoff
                 intents:
+                  - name: CustomHelpIntent
+                    samples:
+                      - something
                   - name: TweetsReaderIntent
                     samples:
-                      - read question
-                      - to read question
-                      - get question
-                      - to get question
+                      - Read question please
+                  - name: IntroductionIntent
+                    samples:
+                      - Please introduce your self
                   - name: AMAZON.CancelIntent
                     samples: []
                   - name: AMAZON.HelpIntent
@@ -110,8 +113,8 @@ resources:
           - AttributeName: function_name
             KeyType: HASH
         ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
 
     TweetMessages:
       Type: AWS::SQS::Queue
@@ -124,7 +127,7 @@ resources:
             Fn::GetAtt:
             - TweetMessagesDeadLetterQueue
             - Arn
-          maxReceiveCount: 10
+          maxReceiveCount: 1000
 
     TweetMessagesDeadLetterQueue:
       Type: AWS::SQS::Queue
