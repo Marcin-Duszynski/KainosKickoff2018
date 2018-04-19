@@ -16,6 +16,7 @@
   "devDependencies": {
     "serverless-alexa-skills": "0.0.6",
     "serverless-iam-roles-per-function": "^0.1.5",
-    "serverless-plugin-iopipe": "^1.4.0"
+    "serverless-plugin-iopipe": "^1.4.0",
+    "retire": "^1.6.0"
   }
 }
