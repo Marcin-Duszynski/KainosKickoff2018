@@ -8,7 +8,7 @@ const app = new Ability({
   applicationId: process.env.ALEXA_SKILL_ID
 });
 
-app.use(timeout(4000));
+app.use(timeout(60000));
 
 app.use((req, next) => {
   console.log('Handling:', req);
@@ -125,6 +125,7 @@ app.on('TweetsReaderIntent', (req, next) => {
     } else {
       speech = (`
         <speak>
+          No questions to read <break time="100ms" />
           Guys, Please send questions using Twitter <break time="100ms" />
           <amazon:effect name="whispered">Don't be shy</amazon:effect>
         </speak>
