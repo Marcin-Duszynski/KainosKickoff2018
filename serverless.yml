@@ -17,7 +17,7 @@ functions:
   kainosKickoffSkill:
     name: KainosKickoffSkill-${self:provider.stage}
     handler: skill.handler
-    memorySize: 512
+    memorySize: 256
     environment:
       ALEXA_SKILL_ID: ${env:ALEXA_SKILL_ID}
     iamRoleStatements:
@@ -34,7 +34,7 @@ functions:
   twitterScanner:
     name: twitterScanner-${self:provider.stage}
     handler: scanner.handler
-    memorySize: 512
+    memorySize: 256
     reservedConcurrency: 1
     environment:
       STATE_DB_NAME: ${self:resources.Resources.StateDb.Properties.TableName}
