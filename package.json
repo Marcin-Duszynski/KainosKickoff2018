@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "description": "Demo app prepared for The Serverless presentation",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "retire": "retire -n -p",
+    "lint": "eslint .",
+    "deploy": "sls deploy"
   },
   "author": "Marcin Duszynski",
   "license": "MIT",
@@ -14,9 +16,15 @@
     "twit": "^2.2.9"
   },
   "devDependencies": {
+    "aws-sdk": "^2.226.1",
+    "eslint": "^4.8.0",
+    "eslint-config-airbnb": "^16.0.0",
+    "eslint-plugin-import": "^2.11.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-react": "^7.7.0",
+    "retire": "^1.6.0",
     "serverless-alexa-skills": "0.0.6",
     "serverless-iam-roles-per-function": "^0.1.5",
-    "serverless-plugin-iopipe": "^1.4.0",
-    "retire": "^1.6.0"
+    "serverless-plugin-iopipe": "^1.4.0"
   }
 }

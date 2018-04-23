@@ -1,23 +1,23 @@
-const { Ability, events }       = require('alexa-ability');
-const { handleAbility }         = require('alexa-ability-lambda-handler');
+const { Ability, events } = require('alexa-ability');
+const { handleAbility } = require('alexa-ability-lambda-handler');
 const { timeout, TimeoutError } = require('alexa-ability-timeout');
-const { SQS }                   = require('aws-sdk');
+const { SQS } = require('aws-sdk');
 
 const sqs = new SQS({ apiVersion: '2012-11-05' });
 const app = new Ability({
-  applicationId: process.env.ALEXA_SKILL_ID
+  applicationId: process.env.ALEXA_SKILL_ID,
 });
 
 app.use(timeout(60000));
 
 app.use((req, next) => {
-  console.log('Handling:', req);
+  console.info('Handling:', req);
   next();
 });
 
-app.on(events.launch, (req, next) => {
-  console.log('Launch', req);
-  
+app.on(events.launch, (req) => {
+  console.info('Launch', req);
+
   const speech = (`
     <speak>
       I'm ready.
@@ -27,8 +27,8 @@ app.on(events.launch, (req, next) => {
   req.say('ssml', speech).send();
 });
 
-app.on(events.end, (req, next) => {
-  console.log(`Session ended because: ${req.reason}`);
+app.on(events.end, (req) => {
+  console.info(`Session ended because: ${req.reason}`);
 
   const speech = (`
     <speak>
@@ -39,7 +39,7 @@ app.on(events.end, (req, next) => {
   req.say('ssml', speech).end();
 });
 
-app.on(events.help, (req, next) => {
+app.on(events.help, (req) => {
   const speech = (`
       <speak>
           Please say <break time="50ms" /> Read question
@@ -49,12 +49,12 @@ app.on(events.help, (req, next) => {
   req.say('ssml', speech).send();
 });
 
-app.on(events.cancel, (req, next) => {
+app.on(events.cancel, (req) => {
   if (req.timedOut) return;
   req.say('Cancelling!').end();
 });
 
-app.on(events.stop, (req, next) => {
+app.on(events.stop, (req) => {
   const speech = (`
     <speak>
       Bye Bye <break time="50ms" /> Kainos
@@ -64,7 +64,7 @@ app.on(events.stop, (req, next) => {
   req.say('ssml', speech).end();
 });
 
-app.on('CustomHelpIntent', (req, next) => {
+app.on('CustomHelpIntent', (req) => {
   const speech = (`
       <speak>
           Please say <break time="50ms" /> Read question
@@ -74,43 +74,43 @@ app.on('CustomHelpIntent', (req, next) => {
   req.say('ssml', speech).send();
 });
 
-app.on('TweetsReaderIntent', (req, next) => {
-  console.log('Intent req', req);
+app.on('TweetsReaderIntent', (req) => {
+  console.info('Intent req', req);
 
   let message;
 
   const params = {
     AttributeNames: [
-       'SentTimestamp'
+      'SentTimestamp',
     ],
     MaxNumberOfMessages: 1,
     MessageAttributeNames: [
-       'All'
+      'All',
     ],
-    QueueUrl: process.env.TWEETS_SQS_URL
+    QueueUrl: process.env.TWEETS_SQS_URL,
   };
 
   sqs.receiveMessage(params, (err, data) => {
     if (err) {
-      console.log("Receive Error", err);
+      console.error('Receive Error', err);
     } else if (data.Messages) {
-      console.log('SQS MSG:', data.Messages[0].MessageAttributes);
+      console.info('SQS MSG:', data.Messages[0].MessageAttributes);
 
       message = {
         author: data.Messages[0].MessageAttributes.Author.StringValue,
-        question: data.Messages[0].MessageAttributes.Message.StringValue
+        question: data.Messages[0].MessageAttributes.Message.StringValue,
       };
 
       const deleteParams = {
         QueueUrl: process.env.TWEETS_SQS_URL,
-        ReceiptHandle: data.Messages[0].ReceiptHandle
+        ReceiptHandle: data.Messages[0].ReceiptHandle,
       };
 
-      sqs.deleteMessage(deleteParams, (err, data) => {
-        if (err) {
-          console.log("Delete Error", err);
+      sqs.deleteMessage(deleteParams, (error) => {
+        if (error) {
+          console.error('Delete Error', err);
         } else {
-          console.log("Message Deleted", data);
+          console.info('Message Deleted', data);
         }
       });
     }
@@ -136,7 +136,7 @@ app.on('TweetsReaderIntent', (req, next) => {
   });
 });
 
-app.on('IntroductionIntent', (req, next) => {
+app.on('IntroductionIntent', (req) => {
   const speech = (`
     <speak>
       Hello Kainos <break time="100ms" />
@@ -149,24 +149,24 @@ app.on('IntroductionIntent', (req, next) => {
   req.say('ssml', speech).send();
 });
 
-app.on('AMAZON.NextIntent', (req, next) => {
+app.on('AMAZON.NextIntent', (req) => {
   const speech = (`
     <speak>
       Guys, Please send questions using Twitter <break time="100ms" />
       <amazon:effect name="whispered">Don't be shy</amazon:effect>
     </speak>
   `);
-  
+
   req.say('ssml', speech).send();
 });
 
-app.use((err, req, next) => {
+app.use((err, req) => {
   if (err instanceof TimeoutError) {
     req.say('Sorry, that took to long. Please try again.').send();
-  };
+  }
 });
 
-app.use((req, next) => {
+app.use((req) => {
   req.say('I don\'t know what to say. Please try again or ask for help.').end();
 });
 
