@@ -1,0 +1,136 @@
+service:
+  name: KainosKickoff18
+
+provider:
+  name: aws
+  region: eu-west-1
+  runtime: nodejs8.10
+  environment:
+    TWEETS_SQS_URL: https://sqs.${self:provider.region}.amazonaws.com/${self:custom.aws_account_id}/${self:resources.Resources.TweetMessages.Properties.QueueName}
+
+plugins:
+  - serverless-alexa-skills
+  - serverless-iam-roles-per-function
+
+functions:
+
+  kainosKickoffSkill:
+    name: KainosKickoffSkill-${self:provider.stage}
+    handler: skill.handler
+    memorySize: 256
+    environment:
+      ALEXA_SKILL_ID: ${env:ALEXA_SKILL_ID}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - sqs:ReceiveMessage
+          - sqs:DeleteMessage
+        Resource: arn:aws:sqs:*:*:${self:resources.Resources.TweetMessages.Properties.QueueName}
+    tags:
+      owner: marcind
+    events:
+      - alexaSkill
+
+  twitterScanner:
+    name: twitterScanner-${self:provider.stage}
+    handler: scanner.handler
+    memorySize: 256
+    reservedConcurrency: 1
+    environment:
+      STATE_DB_NAME: ${self:resources.Resources.StateDb.Properties.TableName}
+      TWITTER_CONSUMER_KEY: ${env:TWITTER_CONSUMER_KEY}
+      TWITTER_CONSUMER_SECRET: ${env:TWITTER_CONSUMER_SECRET}
+      TWITTER_ACCESS_TOKEN: ${env:TWITTER_ACCESS_TOKEN}
+      TWITTER_ACCESS_TOKEN_SECRET: ${env:TWITTER_ACCESS_TOKEN_SECRET}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+        Resource: arn:aws:dynamodb:*:*:table/${self:resources.Resources.StateDb.Properties.TableName}
+      - Effect: Allow
+        Action:
+          - sqs:SendMessage
+        Resource: arn:aws:sqs:*:*:${self:resources.Resources.TweetMessages.Properties.QueueName}
+    tags:
+      owner: marcind
+    events:
+      - schedule: rate(1 minute)
+
+custom:
+  aws_account_id: 425110442143
+
+  alexa:
+    localServerPort: 3456
+    vendorId: ${env:AMAZON_VENDOR_ID}
+    clientId: ${env:AMAZON_CLIENT_ID}
+    clientSecret: ${env:AMAZON_CLIENT_SECRET}
+    skills:
+      - id: ${env:ALEXA_SKILL_ID}
+        manifest:
+          publishingInformation:
+            locales:
+              en-US:
+                name: KainosKickoffSkill
+          apis:
+            custom:
+              endpoint:
+                uri: arn:aws:lambda:${self:provider.region}:${self:custom.aws_account_id}:function:${self:functions.kainosKickoffSkill.name}
+          manifestVersion: '1.0'
+        models:
+          en-US:
+            interactionModel:
+              languageModel:
+                invocationName: kainos kickoff
+                intents:
+                  - name: CustomHelpIntent
+                    samples:
+                      - something
+                  - name: TweetsReaderIntent
+                    samples:
+                      - Read question please
+                  - name: IntroductionIntent
+                    samples:
+                      - Please introduce your self
+                  - name: AMAZON.CancelIntent
+                    samples: []
+                  - name: AMAZON.HelpIntent
+                    samples: []
+                  - name: AMAZON.StopIntent
+                    samples: []
+
+resources:  
+  Resources:
+
+    StateDb:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: KainosKickoff2018State-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: function_name
+            AttributeType: S
+        KeySchema:
+          - AttributeName: function_name
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
+    TweetMessages:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: KainosKickoff2018Tweets-${self:provider.stage}
+        MessageRetentionPeriod: 1209600
+        VisibilityTimeout: 60
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+            - TweetMessagesDeadLetterQueue
+            - Arn
+          maxReceiveCount: 1000
+
+    TweetMessagesDeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: KainosKickoff2018Tweets-death-${self:provider.stage}
+        MessageRetentionPeriod: 1209600
