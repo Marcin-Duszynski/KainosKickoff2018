@@ -132,7 +132,7 @@ app.on('TweetsReaderIntent', (req, next) => {
       `);
     }
 
-    req.say('ssml', speech).send();
+    req.say('ssml', speech).end();
   });
 });
 
